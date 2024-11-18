@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./libraries/SignedSafeMath.sol";
 import "./interfaces/IERC20.sol";
@@ -14,7 +15,7 @@ import './libraries/TransferHelper.sol';
 /// The idea for this MasterChef V2 (MCV2) contract is therefore to be the owner of a dummy token
 /// that is deposited into the MasterChef V1 (MCV1) contract.
 /// The allocation point for this pool on MCV1 is the total allocation point for all pools that receive double incentives.
-contract MasterChef is OwnableUpgradeable,AccessManagedUpgradeable {
+contract MasterChef is UUPSUpgradeable,OwnableUpgradeable,AccessControlEnumerableUpgradeable {
     using Math for int256;
     using Math for uint128;
     using SafeMath for uint256;
@@ -55,6 +56,10 @@ contract MasterChef is OwnableUpgradeable,AccessManagedUpgradeable {
     uint256 private constant SUSHI_PER_BLOCK = 1e20;
     uint256 private constant ACC_SUSHI_PRECISION = 1e12;
 
+    bytes32 public constant AdminRole = keccak256("amm.role.admin");
+    bytes32 public constant UpdateRole = keccak256("amm.role.updater");
+
+
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount, address indexed to);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount, address indexed to);
     event EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount, address indexed to);
@@ -68,15 +73,22 @@ contract MasterChef is OwnableUpgradeable,AccessManagedUpgradeable {
         _disableInitializers();
     }
 
-
-
-
     /// @notice Deposits a dummy token to `MASTER_CHEF` MCV1. This is required because MCV1 holds the minting rights for SUSHI.
     /// Any balance of transaction sender in `dummyToken` is transferred.
     /// The allocation point for the pool on MCV1 is the total allocation point for all pools that receive double incentives.
-    function initilize(address _sushi) external {
+    function initilize(address _sushi,address _updateroler) initializer external {
+        __Ownable_init(msg.sender);
+        _setRoleAdmin(AdminRole, AdminRole);
+        _setRoleAdmin(UpdateRole, AdminRole);
+        _grantRole(AdminRole, msg.sender);
+        _grantRole(UpdateRole, _updateroler);
         SUSHI = IERC20(_sushi);
     }
+
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(UpdateRole) {}
+
 
     /// @notice Returns the number of MCV2 pools.
     function poolLength() public view returns (uint256 pools) {
