@@ -1,12 +1,28 @@
 export const config = {
-
-    ethereum: { 
-        usdc:"",
-        dai:"",
+    "1": {
+        name: "mainnet",
+        addresses:{
+            usdc:"",
+            dai:"",
+            weth:"",
+            factory:"",
+            router:"",
+            masterChef:"",
+            rewardToken:""
+        }
 
     },
-    arbitrum:{
-        usdc:"",
-        dai:""
+    "42161":{
+        name: "arbitrum",
+        addresses:{
+            usdc:"",
+            dai:"",
+            weth:"",
+            factory:"",
+            router:"",
+            masterChef:"",
+            rewardToken:""
+        }
+
     }
 }
