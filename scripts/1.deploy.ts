@@ -4,10 +4,11 @@ async function main() {
     const chainId = await ethers.provider.getNetwork();
     const networkConfig = config[chainId.chainId.toString() as keyof typeof config];
     console.log("Deploying to: ", networkConfig.name + " network...");
+    const [admin] = await ethers.getSigners();
 
     //deploy factory
     const Factory = await ethers.getContractFactory("Factory");
-    const factory = await Factory.deploy();
+    const factory = await Factory.deploy(admin.address);
     await factory.waitForDeployment();
     const factoryAddress = await factory.getAddress();
     console.log("Factory deployed to: ", factoryAddress);

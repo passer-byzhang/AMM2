@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import './interfaces/IFactory.sol';
 import './Pair.sol';
 
-contract UniswapV2Factory is IFactory {
+contract Factory is IFactory {
     address public feeTo;
     address public feeToSetter;
 

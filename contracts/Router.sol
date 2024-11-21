@@ -7,6 +7,7 @@ import './libraries/UniswapV2Library.sol';
 import './libraries/SafeMath.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IWETH.sol';
+import "hardhat/console.sol";
 
 contract Router is IUniswapV2Router02 {
     using SafeMath for uint;
@@ -69,8 +70,12 @@ contract Router is IUniswapV2Router02 {
     ) external virtual override ensure(deadline) returns (uint amountA, uint amountB, uint liquidity) {
         (amountA, amountB) = _addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);
         address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);
+        console.log("tokenA balance before:", IERC20(tokenA).balanceOf(msg.sender));
+        console.log("tokenB balance before:", IERC20(tokenB).balanceOf(msg.sender));
         TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
         TransferHelper.safeTransferFrom(tokenB, msg.sender, pair, amountB);
+        console.log("tokenA balance after:", IERC20(tokenA).balanceOf(msg.sender));
+        console.log("tokenB balance after:", IERC20(tokenB).balanceOf(msg.sender));
         liquidity = IPair(pair).mint(to);
     }
     function addLiquidityETH(
