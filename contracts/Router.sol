@@ -70,12 +70,8 @@ contract Router is IUniswapV2Router02 {
     ) external virtual override ensure(deadline) returns (uint amountA, uint amountB, uint liquidity) {
         (amountA, amountB) = _addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);
         address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);
-        console.log("tokenA balance before:", IERC20(tokenA).balanceOf(msg.sender));
-        console.log("tokenB balance before:", IERC20(tokenB).balanceOf(msg.sender));
         TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
         TransferHelper.safeTransferFrom(tokenB, msg.sender, pair, amountB);
-        console.log("tokenA balance after:", IERC20(tokenA).balanceOf(msg.sender));
-        console.log("tokenB balance after:", IERC20(tokenB).balanceOf(msg.sender));
         liquidity = IPair(pair).mint(to);
     }
     function addLiquidityETH(
@@ -114,10 +110,14 @@ contract Router is IUniswapV2Router02 {
         uint deadline
     ) public virtual override ensure(deadline) returns (uint amountA, uint amountB) {
         address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);
+        console.log("pair: ", pair);
         IPair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
+        console.log("transferFromed");
         (uint amount0, uint amount1) = IPair(pair).burn(to);
         (address token0,) = UniswapV2Library.sortTokens(tokenA, tokenB);
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
+        console.log("amountA: ", amountA);
+        console.log("amountB: ", amountB);
         require(amountA >= amountAMin, 'UniswapV2Router: INSUFFICIENT_A_AMOUNT');
         require(amountB >= amountBMin, 'UniswapV2Router: INSUFFICIENT_B_AMOUNT');
     }
@@ -155,6 +155,8 @@ contract Router is IUniswapV2Router02 {
         address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);
         uint value = approveMax ? type(uint128).max : liquidity;
         IPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
+        console.log("approve balance: ", IERC20(pair).allowance(msg.sender, address(this)));
+        console.log("liqudity balance: ", liquidity);
         (amountA, amountB) = removeLiquidity(tokenA, tokenB, liquidity, amountAMin, amountBMin, to, deadline);
     }
     function removeLiquidityETHWithPermit(
