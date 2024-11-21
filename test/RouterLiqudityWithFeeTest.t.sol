@@ -8,16 +8,16 @@ import {Router} from "../contracts/Router.sol";
 import {IERC20} from "../contracts/interfaces/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {WETH} from "../contracts/mock/WETH.sol";
-import {MockERC20} from "../contracts/mock/MockERC20.sol";
+import {FeeToken} from "../contracts/mock/MockFeeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "hardhat/console.sol";
 
-contract RouterLiqudityTest is Test {
+contract RouterLiqudityWithFeeTest is Test {
     WETH public weth;
     Factory public factory;
     Router public router;
-    MockERC20 public tokenA;
-    MockERC20 public tokenB;
+    FeeToken public tokenA;
+    FeeToken public tokenB;
     address public pair1;
     address public pair2;
     mapping(address => uint256) public users;
@@ -27,8 +27,8 @@ contract RouterLiqudityTest is Test {
         weth = new WETH();
         factory = new Factory(address(this));
         router = new Router(address(factory), address(weth));
-        tokenA = new MockERC20("TokenA", "A");
-        tokenB = new MockERC20("TokenB", "B");
+        tokenA = new FeeToken("TokenA", "A",10);
+        tokenB = new FeeToken("TokenB", "B",10);
         pair1 = factory.createPair(address(tokenA), address(weth));
         pair2 = factory.createPair(address(tokenA), address(tokenB));
         (address user,uint256 key) = makeAddrAndKey("alice");
@@ -232,8 +232,8 @@ contract RouterLiqudityTest is Test {
 
         IERC20(pair1).approve(address(router), liquidity);
         // Remove liquidity
-        (uint256 amountAOut, uint256 amountETHOut) = router
-            .removeLiquidityETH(
+        uint256 amountETHOut = router
+            .removeLiquidityETHSupportingFeeOnTransferTokens(
                 address(tokenA),
                 liquidity,
                 amountAMin,
@@ -242,7 +242,7 @@ contract RouterLiqudityTest is Test {
                 deadline
             );
         // Check results
-        assert(amountAOut >= amountAMin);
+        
         assert(amountETHOut >= amountETHMin);
     }
 

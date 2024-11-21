@@ -8,7 +8,6 @@ contract FeeToken is ERC20 {
 
     constructor(string memory name, string memory symbol, uint256 _feePercentage) ERC20(name, symbol) {
         feePercentage = _feePercentage;
-        _mint(msg.sender, 1000000 * 10 ** decimals());
     }
 
     function transfer(address sender, address recipient, uint256 amount) public {
@@ -18,5 +17,9 @@ contract FeeToken is ERC20 {
         if (fee > 0) {
             super._transfer(sender, address(this), fee);
         }
+    }
+
+    function mint(address to, uint256 amount) public {
+        _mint(to, amount);
     }
 }
