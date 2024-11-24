@@ -1,5 +1,1064 @@
 # Solidity API
 
+## ExternalStorage
+
+### getUint
+
+```solidity
+function getUint(bytes32 key) public view returns (uint256)
+```
+
+### setUint
+
+```solidity
+function setUint(bytes32 key, uint256 value) public
+```
+
+### getAddress
+
+```solidity
+function getAddress(bytes32 key) public view returns (address)
+```
+
+### setAddress
+
+```solidity
+function setAddress(bytes32 key, address value) public
+```
+
+### getBool
+
+```solidity
+function getBool(bytes32 key) public view returns (bool)
+```
+
+### setBool
+
+```solidity
+function setBool(bytes32 key, bool value) public
+```
+
+### getBytes32
+
+```solidity
+function getBytes32(bytes32 key) public view returns (bytes32)
+```
+
+### setBytes32
+
+```solidity
+function setBytes32(bytes32 key, bytes32 value) public
+```
+
+## MasterChef
+
+The (older) MasterChef contract gives out a constant number of SUSHI tokens per block.
+It is the only address with minting rights for SUSHI.
+The idea for this MasterChef V2 (MCV2) contract is therefore to be the owner of a dummy token
+that is deposited into the MasterChef V1 (MCV1) contract.
+The allocation point for this pool on MCV1 is the total allocation point for all pools that receive double incentives.
+
+### UserInfo
+
+Info of each MCV2 user.
+`amount` LP token amount the user has provided.
+`rewardDebt` The amount of SUSHI entitled to the user.
+
+```solidity
+struct UserInfo {
+  uint256 amount;
+  int256 rewardDebt;
+}
+```
+
+### PoolInfo
+
+Info of each MCV2 pool.
+`allocPoint` The amount of allocation points assigned to the pool.
+Also known as the amount of SUSHI to distribute per block.
+
+```solidity
+struct PoolInfo {
+  uint128 accSushiPerShare;
+  uint64 lastRewardBlock;
+  uint64 allocPoint;
+}
+```
+
+### SUSHI
+
+```solidity
+contract IERC20 SUSHI
+```
+
+Address of SUSHI contract.
+
+### poolInfo
+
+```solidity
+struct MasterChef.PoolInfo[] poolInfo
+```
+
+Info of each MCV2 pool.
+
+### lpToken
+
+```solidity
+contract IERC20[] lpToken
+```
+
+Address of the LP token for each MCV2 pool.
+
+### paused
+
+```solidity
+bool paused
+```
+
+### userInfo
+
+```solidity
+mapping(uint256 => mapping(address => struct MasterChef.UserInfo)) userInfo
+```
+
+Info of each user that stakes LP tokens.
+
+### totalAllocPoint
+
+```solidity
+uint256 totalAllocPoint
+```
+
+_Total allocation points. Must be the sum of all allocation points in all pools._
+
+### AdminRole
+
+```solidity
+bytes32 AdminRole
+```
+
+### UpdateRole
+
+```solidity
+bytes32 UpdateRole
+```
+
+### Deposit
+
+```solidity
+event Deposit(address user, uint256 pid, uint256 amount, address to)
+```
+
+### Withdraw
+
+```solidity
+event Withdraw(address user, uint256 pid, uint256 amount, address to)
+```
+
+### EmergencyWithdraw
+
+```solidity
+event EmergencyWithdraw(address user, uint256 pid, uint256 amount, address to)
+```
+
+### Harvest
+
+```solidity
+event Harvest(address user, uint256 pid, uint256 amount)
+```
+
+### LogPoolAddition
+
+```solidity
+event LogPoolAddition(uint256 pid, uint256 allocPoint, contract IERC20 lpToken)
+```
+
+### LogSetPool
+
+```solidity
+event LogSetPool(uint256 pid, uint256 allocPoint)
+```
+
+### LogUpdatePool
+
+```solidity
+event LogUpdatePool(uint256 pid, uint64 lastRewardBlock, uint256 lpSupply, uint256 accSushiPerShare)
+```
+
+### LogInit
+
+```solidity
+event LogInit()
+```
+
+### constructor
+
+```solidity
+constructor() public
+```
+
+### notPaused
+
+```solidity
+modifier notPaused()
+```
+
+### initilize
+
+```solidity
+function initilize(address _sushi, address _updateroler) external
+```
+
+Deposits a dummy token to `MASTER_CHEF` MCV1. This is required because MCV1 holds the minting rights for SUSHI.
+Any balance of transaction sender in `dummyToken` is transferred.
+The allocation point for the pool on MCV1 is the total allocation point for all pools that receive double incentives.
+
+### _authorizeUpgrade
+
+```solidity
+function _authorizeUpgrade(address newImplementation) internal
+```
+
+_Function that should revert when `msg.sender` is not authorized to upgrade the contract. Called by
+{upgradeToAndCall}.
+
+Normally, this function will use an xref:access.adoc[access control] modifier such as {Ownable-onlyOwner}.
+
+```solidity
+function _authorizeUpgrade(address) internal onlyOwner {}
+```_
+
+### poolLength
+
+```solidity
+function poolLength() public view returns (uint256 pools)
+```
+
+Returns the number of MCV2 pools.
+
+### add
+
+```solidity
+function add(uint256 allocPoint, contract IERC20 _lpToken) public
+```
+
+Add a new LP to the pool. Can only be called by the owner.
+DO NOT add the same LP token more than once. Rewards will be messed up if you do.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| allocPoint | uint256 | AP of the new pool. |
+| _lpToken | contract IERC20 | Address of the LP ERC-20 token. |
+
+### set
+
+```solidity
+function set(uint256 _pid, uint256 _allocPoint) public
+```
+
+Update the given pool's SUSHI allocation point and `IRewarder` contract. Can only be called by the owner.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _pid | uint256 | The index of the pool. See `poolInfo`. |
+| _allocPoint | uint256 | New AP of the pool. |
+
+### pendingSushi
+
+```solidity
+function pendingSushi(uint256 _pid, address _user) external view returns (uint256 pending)
+```
+
+View function to see pending SUSHI on frontend.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _pid | uint256 | The index of the pool. See `poolInfo`. |
+| _user | address | Address of user. |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pending | uint256 | SUSHI reward for a given user. |
+
+### massUpdatePools
+
+```solidity
+function massUpdatePools(uint256[] pids) external
+```
+
+Update reward variables for all pools. Be careful of gas spending!
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pids | uint256[] | Pool IDs of all to be updated. Make sure to update all active pools. |
+
+### updatePool
+
+```solidity
+function updatePool(uint256 pid) public returns (struct MasterChef.PoolInfo pool)
+```
+
+Update reward variables of the given pool.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pid | uint256 | The index of the pool. See `poolInfo`. |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pool | struct MasterChef.PoolInfo | Returns the pool that was updated. |
+
+### deposit
+
+```solidity
+function deposit(uint256 pid, uint256 amount, address to) public
+```
+
+Deposit LP tokens to MCV2 for SUSHI allocation.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pid | uint256 | The index of the pool. See `poolInfo`. |
+| amount | uint256 | LP token amount to deposit. |
+| to | address | The receiver of `amount` deposit benefit. |
+
+### withdraw
+
+```solidity
+function withdraw(uint256 pid, uint256 amount, address to) public
+```
+
+Withdraw LP tokens from MCV2.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pid | uint256 | The index of the pool. See `poolInfo`. |
+| amount | uint256 | LP token amount to withdraw. |
+| to | address | Receiver of the LP tokens. |
+
+### harvest
+
+```solidity
+function harvest(uint256 pid, address to) public
+```
+
+Harvest proceeds for transaction sender to `to`.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pid | uint256 | The index of the pool. See `poolInfo`. |
+| to | address | Receiver of SUSHI rewards. |
+
+### withdrawAndHarvest
+
+```solidity
+function withdrawAndHarvest(uint256 pid, uint256 amount, address to) public
+```
+
+Withdraw LP tokens from MCV2 and harvest proceeds for transaction sender to `to`.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pid | uint256 | The index of the pool. See `poolInfo`. |
+| amount | uint256 | LP token amount to withdraw. |
+| to | address | Receiver of the LP tokens and SUSHI rewards. |
+
+### emergencyWithdraw
+
+```solidity
+function emergencyWithdraw(uint256 pid, address to) public
+```
+
+Withdraw without caring about rewards. EMERGENCY ONLY.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pid | uint256 | The index of the pool. See `poolInfo`. |
+| to | address | Receiver of the LP tokens. |
+
+### setPause
+
+```solidity
+function setPause(bool _pause) public
+```
+
+## MasterChefStorage
+
+### owner
+
+```solidity
+address owner
+```
+
+Info of each MCV2 user.
+`amount` LP token amount the user has provided.
+`rewardDebt` The amount of SUSHI entitled to the user.
+
+### onlyOwner
+
+```solidity
+modifier onlyOwner()
+```
+
+### transferOwnership
+
+```solidity
+function transferOwnership(address _owner) public
+```
+
+### constructor
+
+```solidity
+constructor() public
+```
+
+### UserInfo
+
+```solidity
+struct UserInfo {
+  uint256 amount;
+  int256 rewardDebt;
+}
+```
+
+### PoolInfo
+
+Info of each MCV2 pool.
+`allocPoint` The amount of allocation points assigned to the pool.
+Also known as the amount of SUSHI to distribute per block.
+
+```solidity
+struct PoolInfo {
+  uint128 accSushiPerShare;
+  uint64 lastRewardBlock;
+  uint64 allocPoint;
+}
+```
+
+### SUSHI
+
+```solidity
+address SUSHI
+```
+
+Address of SUSHI contract.
+
+### getSushi
+
+```solidity
+function getSushi() public view returns (address)
+```
+
+### setSushi
+
+```solidity
+function setSushi(address _sushi) public
+```
+
+### poolInfo
+
+```solidity
+struct MasterChefStorage.PoolInfo[] poolInfo
+```
+
+Info of each MCV2 pool.
+
+### getPoolInfoLength
+
+```solidity
+function getPoolInfoLength() public view returns (uint256)
+```
+
+### setPoolInfoLength
+
+```solidity
+function setPoolInfoLength(uint256 _length) public
+```
+
+### getPoolInfoElement
+
+```solidity
+function getPoolInfoElement(uint256 _pid) public view returns (struct MasterChefStorage.PoolInfo pool)
+```
+
+### setPoolInfoElement
+
+```solidity
+function setPoolInfoElement(uint256 _pid, uint128 _accSushiPerShare, uint64 _lastRewardBlock, uint64 _allocPoint) public
+```
+
+### pushPoolInfo
+
+```solidity
+function pushPoolInfo(uint128 _accSushiPerShare, uint64 _lastRewardBlock, uint64 _allocPoint) public
+```
+
+### lpToken
+
+```solidity
+address[] lpToken
+```
+
+Address of the LP token for each MCV2 pool.
+
+### getLpTokenLength
+
+```solidity
+function getLpTokenLength() public view returns (uint256)
+```
+
+### setLpTokenLength
+
+```solidity
+function setLpTokenLength(uint256 _length) public
+```
+
+### getLpTokenElement
+
+```solidity
+function getLpTokenElement(uint256 index) public view returns (address)
+```
+
+### setLpTokenElement
+
+```solidity
+function setLpTokenElement(uint256 index, address _lpToken) public
+```
+
+### pushLpToken
+
+```solidity
+function pushLpToken(address _lpToken) public
+```
+
+### userInfo
+
+```solidity
+mapping(uint256 => mapping(address => struct MasterChefStorage.UserInfo)) userInfo
+```
+
+Info of each user that stakes LP tokens.
+
+### getUserInfoElement
+
+```solidity
+function getUserInfoElement(uint256 _pid, address _user) public view returns (struct MasterChefStorage.UserInfo userInfo)
+```
+
+### setUserInfoElement
+
+```solidity
+function setUserInfoElement(uint256 _pid, address _user, uint256 _amount, int256 _rewardDebt) public
+```
+
+### totalAllocPoint
+
+```solidity
+uint256 totalAllocPoint
+```
+
+_Total allocation points. Must be the sum of all allocation points in all pools._
+
+### getTotalAllocPoint
+
+```solidity
+function getTotalAllocPoint() public view returns (uint256)
+```
+
+### setTotalAllocPoint
+
+```solidity
+function setTotalAllocPoint(uint256 _totalAllocPoint) public
+```
+
+### SUSHI_PER_BLOCK
+
+```solidity
+uint256 SUSHI_PER_BLOCK
+```
+
+### ACC_SUSHI_PRECISION
+
+```solidity
+uint256 ACC_SUSHI_PRECISION
+```
+
+### AdminRole
+
+```solidity
+bytes32 AdminRole
+```
+
+### UpdateRole
+
+```solidity
+bytes32 UpdateRole
+```
+
+## MasterChefWithExternalStorage
+
+The (older) MasterChef contract gives out a constant number of SUSHI tokens per block.
+It is the only address with minting rights for SUSHI.
+The idea for this MasterChef V2 (MCV2) contract is therefore to be the owner of a dummy token
+that is deposited into the MasterChef V1 (MCV1) contract.
+The allocation point for this pool on MCV1 is the total allocation point for all pools that receive double incentives.
+
+### Deposit
+
+```solidity
+event Deposit(address user, uint256 pid, uint256 amount, address to)
+```
+
+### Withdraw
+
+```solidity
+event Withdraw(address user, uint256 pid, uint256 amount, address to)
+```
+
+### EmergencyWithdraw
+
+```solidity
+event EmergencyWithdraw(address user, uint256 pid, uint256 amount, address to)
+```
+
+### Harvest
+
+```solidity
+event Harvest(address user, uint256 pid, uint256 amount)
+```
+
+### LogPoolAddition
+
+```solidity
+event LogPoolAddition(uint256 pid, uint256 allocPoint, contract IERC20 lpToken)
+```
+
+### LogSetPool
+
+```solidity
+event LogSetPool(uint256 pid, uint256 allocPoint)
+```
+
+### LogUpdatePool
+
+```solidity
+event LogUpdatePool(uint256 pid, uint64 lastRewardBlock, uint256 lpSupply, uint256 accSushiPerShare)
+```
+
+### LogInit
+
+```solidity
+event LogInit()
+```
+
+### constructor
+
+```solidity
+constructor() public
+```
+
+### initilize
+
+```solidity
+function initilize(address _storageContract) external
+```
+
+Deposits a dummy token to `MASTER_CHEF` MCV1. This is required because MCV1 holds the minting rights for SUSHI.
+Any balance of transaction sender in `dummyToken` is transferred.
+The allocation point for the pool on MCV1 is the total allocation point for all pools that receive double incentives.
+
+### setRewardToken
+
+```solidity
+function setRewardToken(address _rewardToken) public
+```
+
+### add
+
+```solidity
+function add(uint256 allocPoint, contract IERC20 _lpToken) public
+```
+
+Add a new LP to the pool. Can only be called by the owner.
+DO NOT add the same LP token more than once. Rewards will be messed up if you do.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| allocPoint | uint256 | AP of the new pool. |
+| _lpToken | contract IERC20 | Address of the LP ERC-20 token. |
+
+### set
+
+```solidity
+function set(uint256 _pid, uint256 _allocPoint) public
+```
+
+Update the given pool's SUSHI allocation point and `IRewarder` contract. Can only be called by the owner.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _pid | uint256 | The index of the pool. See `poolInfo`. |
+| _allocPoint | uint256 | New AP of the pool. |
+
+### pendingSushi
+
+```solidity
+function pendingSushi(uint256 _pid, address _user) external view returns (uint256 pending)
+```
+
+View function to see pending SUSHI on frontend.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _pid | uint256 | The index of the pool. See `poolInfo`. |
+| _user | address | Address of user. |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pending | uint256 | SUSHI reward for a given user. |
+
+### massUpdatePools
+
+```solidity
+function massUpdatePools(uint256[] pids) external
+```
+
+Update reward variables for all pools. Be careful of gas spending!
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pids | uint256[] | Pool IDs of all to be updated. Make sure to update all active pools. |
+
+### updatePool
+
+```solidity
+function updatePool(uint256 pid) public returns (struct MasterChefStorage.PoolInfo pool)
+```
+
+Update reward variables of the given pool.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pid | uint256 | The index of the pool. See `poolInfo`. |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pool | struct MasterChefStorage.PoolInfo | Returns the pool that was updated. |
+
+### deposit
+
+```solidity
+function deposit(uint256 pid, uint256 amount, address to) public
+```
+
+Deposit LP tokens to MCV2 for SUSHI allocation.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pid | uint256 | The index of the pool. See `poolInfo`. |
+| amount | uint256 | LP token amount to deposit. |
+| to | address | The receiver of `amount` deposit benefit. |
+
+### withdraw
+
+```solidity
+function withdraw(uint256 pid, uint256 amount, address to) public
+```
+
+Withdraw LP tokens from MCV2.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pid | uint256 | The index of the pool. See `poolInfo`. |
+| amount | uint256 | LP token amount to withdraw. |
+| to | address | Receiver of the LP tokens. |
+
+### harvest
+
+```solidity
+function harvest(uint256 pid, address to) public
+```
+
+Harvest proceeds for transaction sender to `to`.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pid | uint256 | The index of the pool. See `poolInfo`. |
+| to | address | Receiver of SUSHI rewards. |
+
+### withdrawAndHarvest
+
+```solidity
+function withdrawAndHarvest(uint256 pid, uint256 amount, address to) public
+```
+
+Withdraw LP tokens from MCV2 and harvest proceeds for transaction sender to `to`.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pid | uint256 | The index of the pool. See `poolInfo`. |
+| amount | uint256 | LP token amount to withdraw. |
+| to | address | Receiver of the LP tokens and SUSHI rewards. |
+
+### emergencyWithdraw
+
+```solidity
+function emergencyWithdraw(uint256 pid, address to) public
+```
+
+Withdraw without caring about rewards. EMERGENCY ONLY.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| pid | uint256 | The index of the pool. See `poolInfo`. |
+| to | address | Receiver of the LP tokens. |
+
+## IERC20
+
+### Approval
+
+```solidity
+event Approval(address owner, address spender, uint256 value)
+```
+
+### Transfer
+
+```solidity
+event Transfer(address from, address to, uint256 value)
+```
+
+### name
+
+```solidity
+function name() external view returns (string)
+```
+
+### symbol
+
+```solidity
+function symbol() external view returns (string)
+```
+
+### decimals
+
+```solidity
+function decimals() external view returns (uint8)
+```
+
+### totalSupply
+
+```solidity
+function totalSupply() external view returns (uint256)
+```
+
+### balanceOf
+
+```solidity
+function balanceOf(address owner) external view returns (uint256)
+```
+
+### allowance
+
+```solidity
+function allowance(address owner, address spender) external view returns (uint256)
+```
+
+### approve
+
+```solidity
+function approve(address spender, uint256 value) external returns (bool)
+```
+
+### transfer
+
+```solidity
+function transfer(address to, uint256 value) external returns (bool)
+```
+
+### transferFrom
+
+```solidity
+function transferFrom(address from, address to, uint256 value) external returns (bool)
+```
+
+## SafeMath
+
+### add
+
+```solidity
+function add(uint256 x, uint256 y) internal pure returns (uint256 z)
+```
+
+### sub
+
+```solidity
+function sub(uint256 x, uint256 y) internal pure returns (uint256 z)
+```
+
+### mul
+
+```solidity
+function mul(uint256 x, uint256 y) internal pure returns (uint256 z)
+```
+
+## SignedSafeMath
+
+### mul
+
+```solidity
+function mul(int256 a, int256 b) internal pure returns (int256)
+```
+
+_Returns the multiplication of two signed integers, reverting on
+overflow.
+
+Counterpart to Solidity's `*` operator.
+
+Requirements:
+
+- Multiplication cannot overflow._
+
+### div
+
+```solidity
+function div(int256 a, int256 b) internal pure returns (int256)
+```
+
+_Returns the integer division of two signed integers. Reverts on
+division by zero. The result is rounded towards zero.
+
+Counterpart to Solidity's `/` operator. Note: this function uses a
+`revert` opcode (which leaves remaining gas untouched) while Solidity
+uses an invalid opcode to revert (consuming all remaining gas).
+
+Requirements:
+
+- The divisor cannot be zero._
+
+### sub
+
+```solidity
+function sub(int256 a, int256 b) internal pure returns (int256)
+```
+
+_Returns the subtraction of two signed integers, reverting on
+overflow.
+
+Counterpart to Solidity's `-` operator.
+
+Requirements:
+
+- Subtraction cannot overflow._
+
+### add
+
+```solidity
+function add(int256 a, int256 b) internal pure returns (int256)
+```
+
+_Returns the addition of two signed integers, reverting on
+overflow.
+
+Counterpart to Solidity's `+` operator.
+
+Requirements:
+
+- Addition cannot overflow._
+
+### toUInt256
+
+```solidity
+function toUInt256(int256 a) internal pure returns (uint256)
+```
+
+## TransferHelper
+
+### safeApprove
+
+```solidity
+function safeApprove(address token, address to, uint256 value) internal
+```
+
+### safeTransfer
+
+```solidity
+function safeTransfer(address token, address to, uint256 value) internal
+```
+
+### safeTransferFrom
+
+```solidity
+function safeTransferFrom(address token, address from, address to, uint256 value) internal
+```
+
+### safeTransferETH
+
+```solidity
+function safeTransferETH(address to, uint256 value) internal
+```
+
+## RewardToken
+
+### constructor
+
+```solidity
+constructor() public
+```
+
+### mint
+
+```solidity
+function mint(address to, uint256 amount) public
+```
+
 ## Router
 
 ### factory
@@ -180,74 +1239,6 @@ function getAmountsOut(uint256 amountIn, address[] path) public view virtual ret
 
 ```solidity
 function getAmountsIn(uint256 amountOut, address[] path) public view virtual returns (uint256[] amounts)
-```
-
-## IERC20
-
-### Approval
-
-```solidity
-event Approval(address owner, address spender, uint256 value)
-```
-
-### Transfer
-
-```solidity
-event Transfer(address from, address to, uint256 value)
-```
-
-### name
-
-```solidity
-function name() external view returns (string)
-```
-
-### symbol
-
-```solidity
-function symbol() external view returns (string)
-```
-
-### decimals
-
-```solidity
-function decimals() external view returns (uint8)
-```
-
-### totalSupply
-
-```solidity
-function totalSupply() external view returns (uint256)
-```
-
-### balanceOf
-
-```solidity
-function balanceOf(address owner) external view returns (uint256)
-```
-
-### allowance
-
-```solidity
-function allowance(address owner, address spender) external view returns (uint256)
-```
-
-### approve
-
-```solidity
-function approve(address spender, uint256 value) external returns (bool)
-```
-
-### transfer
-
-```solidity
-function transfer(address to, uint256 value) external returns (bool)
-```
-
-### transferFrom
-
-```solidity
-function transferFrom(address from, address to, uint256 value) external returns (bool)
 ```
 
 ## IFactory
@@ -674,52 +1665,6 @@ function transfer(address to, uint256 value) external returns (bool)
 function withdraw(uint256) external
 ```
 
-## SafeMath
-
-### add
-
-```solidity
-function add(uint256 x, uint256 y) internal pure returns (uint256 z)
-```
-
-### sub
-
-```solidity
-function sub(uint256 x, uint256 y) internal pure returns (uint256 z)
-```
-
-### mul
-
-```solidity
-function mul(uint256 x, uint256 y) internal pure returns (uint256 z)
-```
-
-## TransferHelper
-
-### safeApprove
-
-```solidity
-function safeApprove(address token, address to, uint256 value) internal
-```
-
-### safeTransfer
-
-```solidity
-function safeTransfer(address token, address to, uint256 value) internal
-```
-
-### safeTransferFrom
-
-```solidity
-function safeTransferFrom(address token, address from, address to, uint256 value) internal
-```
-
-### safeTransferETH
-
-```solidity
-function safeTransferETH(address to, uint256 value) internal
-```
-
 ## UniswapV2Library
 
 ### sortTokens
@@ -1074,344 +2019,6 @@ function transferFrom(address from, address to, uint256 value) external returns 
 function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external
 ```
 
-## MasterChef
-
-The (older) MasterChef contract gives out a constant number of SUSHI tokens per block.
-It is the only address with minting rights for SUSHI.
-The idea for this MasterChef V2 (MCV2) contract is therefore to be the owner of a dummy token
-that is deposited into the MasterChef V1 (MCV1) contract.
-The allocation point for this pool on MCV1 is the total allocation point for all pools that receive double incentives.
-
-### UserInfo
-
-Info of each MCV2 user.
-`amount` LP token amount the user has provided.
-`rewardDebt` The amount of SUSHI entitled to the user.
-
-```solidity
-struct UserInfo {
-  uint256 amount;
-  int256 rewardDebt;
-}
-```
-
-### PoolInfo
-
-Info of each MCV2 pool.
-`allocPoint` The amount of allocation points assigned to the pool.
-Also known as the amount of SUSHI to distribute per block.
-
-```solidity
-struct PoolInfo {
-  uint128 accSushiPerShare;
-  uint64 lastRewardBlock;
-  uint64 allocPoint;
-}
-```
-
-### SUSHI
-
-```solidity
-contract IERC20 SUSHI
-```
-
-Address of SUSHI contract.
-
-### poolInfo
-
-```solidity
-struct MasterChef.PoolInfo[] poolInfo
-```
-
-Info of each MCV2 pool.
-
-### lpToken
-
-```solidity
-contract IERC20[] lpToken
-```
-
-Address of the LP token for each MCV2 pool.
-
-### userInfo
-
-```solidity
-mapping(uint256 => mapping(address => struct MasterChef.UserInfo)) userInfo
-```
-
-Info of each user that stakes LP tokens.
-
-### totalAllocPoint
-
-```solidity
-uint256 totalAllocPoint
-```
-
-_Total allocation points. Must be the sum of all allocation points in all pools._
-
-### AdminRole
-
-```solidity
-bytes32 AdminRole
-```
-
-### UpdateRole
-
-```solidity
-bytes32 UpdateRole
-```
-
-### Deposit
-
-```solidity
-event Deposit(address user, uint256 pid, uint256 amount, address to)
-```
-
-### Withdraw
-
-```solidity
-event Withdraw(address user, uint256 pid, uint256 amount, address to)
-```
-
-### EmergencyWithdraw
-
-```solidity
-event EmergencyWithdraw(address user, uint256 pid, uint256 amount, address to)
-```
-
-### Harvest
-
-```solidity
-event Harvest(address user, uint256 pid, uint256 amount)
-```
-
-### LogPoolAddition
-
-```solidity
-event LogPoolAddition(uint256 pid, uint256 allocPoint, contract IERC20 lpToken)
-```
-
-### LogSetPool
-
-```solidity
-event LogSetPool(uint256 pid, uint256 allocPoint)
-```
-
-### LogUpdatePool
-
-```solidity
-event LogUpdatePool(uint256 pid, uint64 lastRewardBlock, uint256 lpSupply, uint256 accSushiPerShare)
-```
-
-### LogInit
-
-```solidity
-event LogInit()
-```
-
-### constructor
-
-```solidity
-constructor() public
-```
-
-### initilize
-
-```solidity
-function initilize(address _sushi, address _updateroler) external
-```
-
-Deposits a dummy token to `MASTER_CHEF` MCV1. This is required because MCV1 holds the minting rights for SUSHI.
-Any balance of transaction sender in `dummyToken` is transferred.
-The allocation point for the pool on MCV1 is the total allocation point for all pools that receive double incentives.
-
-### _authorizeUpgrade
-
-```solidity
-function _authorizeUpgrade(address newImplementation) internal
-```
-
-_Function that should revert when `msg.sender` is not authorized to upgrade the contract. Called by
-{upgradeToAndCall}.
-
-Normally, this function will use an xref:access.adoc[access control] modifier such as {Ownable-onlyOwner}.
-
-```solidity
-function _authorizeUpgrade(address) internal onlyOwner {}
-```_
-
-### poolLength
-
-```solidity
-function poolLength() public view returns (uint256 pools)
-```
-
-Returns the number of MCV2 pools.
-
-### add
-
-```solidity
-function add(uint256 allocPoint, contract IERC20 _lpToken) public
-```
-
-Add a new LP to the pool. Can only be called by the owner.
-DO NOT add the same LP token more than once. Rewards will be messed up if you do.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| allocPoint | uint256 | AP of the new pool. |
-| _lpToken | contract IERC20 | Address of the LP ERC-20 token. |
-
-### set
-
-```solidity
-function set(uint256 _pid, uint256 _allocPoint) public
-```
-
-Update the given pool's SUSHI allocation point and `IRewarder` contract. Can only be called by the owner.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _pid | uint256 | The index of the pool. See `poolInfo`. |
-| _allocPoint | uint256 | New AP of the pool. |
-
-### pendingSushi
-
-```solidity
-function pendingSushi(uint256 _pid, address _user) external view returns (uint256 pending)
-```
-
-View function to see pending SUSHI on frontend.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _pid | uint256 | The index of the pool. See `poolInfo`. |
-| _user | address | Address of user. |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| pending | uint256 | SUSHI reward for a given user. |
-
-### massUpdatePools
-
-```solidity
-function massUpdatePools(uint256[] pids) external
-```
-
-Update reward variables for all pools. Be careful of gas spending!
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| pids | uint256[] | Pool IDs of all to be updated. Make sure to update all active pools. |
-
-### updatePool
-
-```solidity
-function updatePool(uint256 pid) public returns (struct MasterChef.PoolInfo pool)
-```
-
-Update reward variables of the given pool.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| pid | uint256 | The index of the pool. See `poolInfo`. |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| pool | struct MasterChef.PoolInfo | Returns the pool that was updated. |
-
-### deposit
-
-```solidity
-function deposit(uint256 pid, uint256 amount, address to) public
-```
-
-Deposit LP tokens to MCV2 for SUSHI allocation.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| pid | uint256 | The index of the pool. See `poolInfo`. |
-| amount | uint256 | LP token amount to deposit. |
-| to | address | The receiver of `amount` deposit benefit. |
-
-### withdraw
-
-```solidity
-function withdraw(uint256 pid, uint256 amount, address to) public
-```
-
-Withdraw LP tokens from MCV2.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| pid | uint256 | The index of the pool. See `poolInfo`. |
-| amount | uint256 | LP token amount to withdraw. |
-| to | address | Receiver of the LP tokens. |
-
-### harvest
-
-```solidity
-function harvest(uint256 pid, address to) public
-```
-
-Harvest proceeds for transaction sender to `to`.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| pid | uint256 | The index of the pool. See `poolInfo`. |
-| to | address | Receiver of SUSHI rewards. |
-
-### withdrawAndHarvest
-
-```solidity
-function withdrawAndHarvest(uint256 pid, uint256 amount, address to) public
-```
-
-Withdraw LP tokens from MCV2 and harvest proceeds for transaction sender to `to`.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| pid | uint256 | The index of the pool. See `poolInfo`. |
-| amount | uint256 | LP token amount to withdraw. |
-| to | address | Receiver of the LP tokens and SUSHI rewards. |
-
-### emergencyWithdraw
-
-```solidity
-function emergencyWithdraw(uint256 pid, address to) public
-```
-
-Withdraw without caring about rewards. EMERGENCY ONLY.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| pid | uint256 | The index of the pool. See `poolInfo`. |
-| to | address | Receiver of the LP tokens. |
-
 ## Pair
 
 ### MINIMUM_LIQUIDITY
@@ -1648,76 +2255,6 @@ function min(uint256 x, uint256 y) internal pure returns (uint256 z)
 function sqrt(uint256 y) internal pure returns (uint256 z)
 ```
 
-## SignedSafeMath
-
-### mul
-
-```solidity
-function mul(int256 a, int256 b) internal pure returns (int256)
-```
-
-_Returns the multiplication of two signed integers, reverting on
-overflow.
-
-Counterpart to Solidity's `*` operator.
-
-Requirements:
-
-- Multiplication cannot overflow._
-
-### div
-
-```solidity
-function div(int256 a, int256 b) internal pure returns (int256)
-```
-
-_Returns the integer division of two signed integers. Reverts on
-division by zero. The result is rounded towards zero.
-
-Counterpart to Solidity's `/` operator. Note: this function uses a
-`revert` opcode (which leaves remaining gas untouched) while Solidity
-uses an invalid opcode to revert (consuming all remaining gas).
-
-Requirements:
-
-- The divisor cannot be zero._
-
-### sub
-
-```solidity
-function sub(int256 a, int256 b) internal pure returns (int256)
-```
-
-_Returns the subtraction of two signed integers, reverting on
-overflow.
-
-Counterpart to Solidity's `-` operator.
-
-Requirements:
-
-- Subtraction cannot overflow._
-
-### add
-
-```solidity
-function add(int256 a, int256 b) internal pure returns (int256)
-```
-
-_Returns the addition of two signed integers, reverting on
-overflow.
-
-Counterpart to Solidity's `+` operator.
-
-Requirements:
-
-- Addition cannot overflow._
-
-### toUInt256
-
-```solidity
-function toUInt256(int256 a) internal pure returns (uint256)
-```
-
 ## UQ112x112
 
 ### Q112
@@ -1736,13 +2273,5 @@ function encode(uint112 y) internal pure returns (uint224 z)
 
 ```solidity
 function uqdiv(uint224 x, uint112 y) internal pure returns (uint224 z)
-```
-
-## RewardToken
-
-### constructor
-
-```solidity
-constructor() public
 ```
 
