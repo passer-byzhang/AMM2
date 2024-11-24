@@ -103,7 +103,7 @@ contract MasterChefStorage is ExternalStorage {
 
     /// @notice Info of each user that stakes LP tokens.
     mapping (uint256 => mapping (address => UserInfo)) public userInfo;
-    function getUserInfoElement(uint256 _pid, address _user) public onlyOwner view returns (UserInfo memory userInfo) {
+    function getUserInfoElement(uint256 _pid, address _user) public  view returns (UserInfo memory userInfo) {
         userInfo.amount = getUint(keccak256(abi.encodePacked("userInfo",_pid, _user,"amount")));
         userInfo.rewardDebt = int256(getUint(keccak256(abi.encodePacked("userInfo",_pid, _user,"rewardDebt"))));
     }

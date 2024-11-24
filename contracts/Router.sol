@@ -2,21 +2,21 @@ pragma solidity ^0.8.20;
 import './interfaces/IFactory.sol';
 import './libraries/TransferHelper.sol';
 
-import './interfaces/IUniswapV2Router02.sol';
+import './interfaces/IRouter02.sol';
 import './libraries/UniswapV2Library.sol';
 import './libraries/SafeMath.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IWETH.sol';
 import "hardhat/console.sol";
 
-contract Router is IUniswapV2Router02 {
+contract Router is IRouter02 {
     using SafeMath for uint;
 
     address public immutable override factory;
     address public immutable override WETH;
 
     modifier ensure(uint deadline) {
-        require(deadline >= block.timestamp, 'UniswapV2Router: EXPIRED');
+        require(deadline >= block.timestamp, 'AMMV2Router: EXPIRED');
         _;
     }
 
@@ -48,12 +48,12 @@ contract Router is IUniswapV2Router02 {
         } else {
             uint amountBOptimal = UniswapV2Library.quote(amountADesired, reserveA, reserveB);
             if (amountBOptimal <= amountBDesired) {
-                require(amountBOptimal >= amountBMin, 'UniswapV2Router: INSUFFICIENT_B_AMOUNT');
+                require(amountBOptimal >= amountBMin, 'AMMV2Router: INSUFFICIENT_B_AMOUNT');
                 (amountA, amountB) = (amountADesired, amountBOptimal);
             } else {
                 uint amountAOptimal = UniswapV2Library.quote(amountBDesired, reserveB, reserveA);
                 assert(amountAOptimal <= amountADesired);
-                require(amountAOptimal >= amountAMin, 'UniswapV2Router: INSUFFICIENT_A_AMOUNT');
+                require(amountAOptimal >= amountAMin, 'AMMV2Router: INSUFFICIENT_A_AMOUNT');
                 (amountA, amountB) = (amountAOptimal, amountBDesired);
             }
         }
@@ -118,8 +118,8 @@ contract Router is IUniswapV2Router02 {
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
         console.log("amountA: ", amountA);
         console.log("amountB: ", amountB);
-        require(amountA >= amountAMin, 'UniswapV2Router: INSUFFICIENT_A_AMOUNT');
-        require(amountB >= amountBMin, 'UniswapV2Router: INSUFFICIENT_B_AMOUNT');
+        require(amountA >= amountAMin, 'AMMV2Router: INSUFFICIENT_A_AMOUNT');
+        require(amountB >= amountBMin, 'AMMV2Router: INSUFFICIENT_B_AMOUNT');
     }
     function removeLiquidityETH(
         address token,
@@ -235,7 +235,7 @@ contract Router is IUniswapV2Router02 {
         uint deadline
     ) external virtual override ensure(deadline) returns (uint[] memory amounts) {
         amounts = UniswapV2Library.getAmountsOut(factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
+        require(amounts[amounts.length - 1] >= amountOutMin, 'AMMV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, UniswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]
         );
@@ -249,7 +249,7 @@ contract Router is IUniswapV2Router02 {
         uint deadline
     ) external virtual override ensure(deadline) returns (uint[] memory amounts) {
         amounts = UniswapV2Library.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= amountInMax, 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT');
+        require(amounts[0] <= amountInMax, 'AMMV2Router: EXCESSIVE_INPUT_AMOUNT');
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, UniswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]
         );
@@ -263,9 +263,9 @@ contract Router is IUniswapV2Router02 {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[0] == WETH, 'UniswapV2Router: INVALID_PATH');
+        require(path[0] == WETH, 'AMMV2Router: INVALID_PATH');
         amounts = UniswapV2Library.getAmountsOut(factory, msg.value, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
+        require(amounts[amounts.length - 1] >= amountOutMin, 'AMMV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
         IWETH(WETH).deposit{value: amounts[0]}();
         assert(IWETH(WETH).transfer(UniswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
@@ -277,9 +277,9 @@ contract Router is IUniswapV2Router02 {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[path.length - 1] == WETH, 'UniswapV2Router: INVALID_PATH');
+        require(path[path.length - 1] == WETH, 'AMMV2Router: INVALID_PATH');
         amounts = UniswapV2Library.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= amountInMax, 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT');
+        require(amounts[0] <= amountInMax, 'AMMV2Router: EXCESSIVE_INPUT_AMOUNT');
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, UniswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]
         );
@@ -294,9 +294,9 @@ contract Router is IUniswapV2Router02 {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[path.length - 1] == WETH, 'UniswapV2Router: INVALID_PATH');
+        require(path[path.length - 1] == WETH, 'AMMV2Router: INVALID_PATH');
         amounts = UniswapV2Library.getAmountsOut(factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
+        require(amounts[amounts.length - 1] >= amountOutMin, 'AMMV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, UniswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]
         );
@@ -312,9 +312,9 @@ contract Router is IUniswapV2Router02 {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[0] == WETH, 'UniswapV2Router: INVALID_PATH');
+        require(path[0] == WETH, 'AMMV2Router: INVALID_PATH');
         amounts = UniswapV2Library.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= msg.value, 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT');
+        require(amounts[0] <= msg.value, 'AMMV2Router: EXCESSIVE_INPUT_AMOUNT');
         IWETH(WETH).deposit{value: amounts[0]}();
         assert(IWETH(WETH).transfer(UniswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
@@ -356,7 +356,7 @@ contract Router is IUniswapV2Router02 {
         _swapSupportingFeeOnTransferTokens(path, to);
         require(
             IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >= amountOutMin,
-            'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT'
+            'AMMV2Router: INSUFFICIENT_OUTPUT_AMOUNT'
         );
     }
     function swapExactETHForTokensSupportingFeeOnTransferTokens(
@@ -371,7 +371,7 @@ contract Router is IUniswapV2Router02 {
         payable
         ensure(deadline)
     {
-        require(path[0] == WETH, 'UniswapV2Router: INVALID_PATH');
+        require(path[0] == WETH, 'AMMV2Router: INVALID_PATH');
         uint amountIn = msg.value;
         IWETH(WETH).deposit{value: amountIn}();
         assert(IWETH(WETH).transfer(UniswapV2Library.pairFor(factory, path[0], path[1]), amountIn));
@@ -379,7 +379,7 @@ contract Router is IUniswapV2Router02 {
         _swapSupportingFeeOnTransferTokens(path, to);
         require(
             IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >= amountOutMin,
-            'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT'
+            'AMMV2Router: INSUFFICIENT_OUTPUT_AMOUNT'
         );
     }
     function swapExactTokensForETHSupportingFeeOnTransferTokens(
@@ -394,13 +394,13 @@ contract Router is IUniswapV2Router02 {
         override
         ensure(deadline)
     {
-        require(path[path.length - 1] == WETH, 'UniswapV2Router: INVALID_PATH');
+        require(path[path.length - 1] == WETH, 'AMMV2Router: INVALID_PATH');
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, UniswapV2Library.pairFor(factory, path[0], path[1]), amountIn
         );
         _swapSupportingFeeOnTransferTokens(path, address(this));
         uint amountOut = IERC20(WETH).balanceOf(address(this));
-        require(amountOut >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
+        require(amountOut >= amountOutMin, 'AMMV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
         IWETH(WETH).withdraw(amountOut);
         TransferHelper.safeTransferETH(to, amountOut);
     }

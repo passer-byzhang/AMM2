@@ -5,10 +5,12 @@ import "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnume
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "./libraries/SignedSafeMath.sol";
 import "./interfaces/IERC20.sol";
 import './libraries/SafeMath.sol';
 import './libraries/TransferHelper.sol';
+import "hardhat/console.sol";
 
 /// @notice The (older) MasterChef contract gives out a constant number of SUSHI tokens per block.
 /// It is the only address with minting rights for SUSHI.
@@ -47,6 +49,8 @@ contract MasterChef is UUPSUpgradeable,OwnableUpgradeable,AccessControlEnumerabl
     /// @notice Address of the LP token for each MCV2 pool.
     IERC20[] public lpToken;
 
+    bool public paused = false;
+
 
     /// @notice Info of each user that stakes LP tokens.
     mapping (uint256 => mapping (address => UserInfo)) public userInfo;
@@ -71,6 +75,11 @@ contract MasterChef is UUPSUpgradeable,OwnableUpgradeable,AccessControlEnumerabl
 
     constructor() {
         _disableInitializers();
+    }
+
+    modifier notPaused() {
+        require(!paused, "MasterChef: paused");
+        _;
     }
 
     /// @notice Deposits a dummy token to `MASTER_CHEF` MCV1. This is required because MCV1 holds the minting rights for SUSHI.
@@ -128,13 +137,21 @@ contract MasterChef is UUPSUpgradeable,OwnableUpgradeable,AccessControlEnumerabl
     function pendingSushi(uint256 _pid, address _user) external view returns (uint256 pending) {
         PoolInfo memory pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
+        console.log("pool.accSushiPerShare", pool.accSushiPerShare);
+        console.log("pool.lastRewardBlock", pool.lastRewardBlock);
         uint256 accSushiPerShare = pool.accSushiPerShare;
+                console.log("user.amount", user.amount);
+        console.log("user.rewardDebt", uint256(user.rewardDebt));
         uint256 lpSupply = lpToken[_pid].balanceOf(address(this));
+                console.log("lpSupply", lpSupply);
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 blocks = block.number.sub(pool.lastRewardBlock);
             uint256 sushiReward = blocks.mul(SUSHI_PER_BLOCK).mul(pool.allocPoint) / totalAllocPoint;
             accSushiPerShare = accSushiPerShare.add(sushiReward.mul(ACC_SUSHI_PRECISION) / lpSupply);
         }
+        console.log("accSushiPerShare", accSushiPerShare);
+        console.log("user.amount", user.amount);
+        console.log("user.rewardDebt", uint256(user.rewardDebt));
         pending = int256(user.amount.mul(accSushiPerShare) / ACC_SUSHI_PRECISION).sub(user.rewardDebt).toUInt256();
     }
 
@@ -170,7 +187,7 @@ contract MasterChef is UUPSUpgradeable,OwnableUpgradeable,AccessControlEnumerabl
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param amount LP token amount to deposit.
     /// @param to The receiver of `amount` deposit benefit.
-    function deposit(uint256 pid, uint256 amount, address to) public {
+    function deposit(uint256 pid, uint256 amount, address to) public notPaused {
         PoolInfo memory pool = updatePool(pid);
         UserInfo storage user = userInfo[pid][to];
 
@@ -187,7 +204,7 @@ contract MasterChef is UUPSUpgradeable,OwnableUpgradeable,AccessControlEnumerabl
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param amount LP token amount to withdraw.
     /// @param to Receiver of the LP tokens.
-    function withdraw(uint256 pid, uint256 amount, address to) public {
+    function withdraw(uint256 pid, uint256 amount, address to) public notPaused{
         PoolInfo memory pool = updatePool(pid);
         UserInfo storage user = userInfo[pid][msg.sender];
 
@@ -224,7 +241,7 @@ contract MasterChef is UUPSUpgradeable,OwnableUpgradeable,AccessControlEnumerabl
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param amount LP token amount to withdraw.
     /// @param to Receiver of the LP tokens and SUSHI rewards.
-    function withdrawAndHarvest(uint256 pid, uint256 amount, address to) public {
+    function withdrawAndHarvest(uint256 pid, uint256 amount, address to) public notPaused{
         PoolInfo memory pool = updatePool(pid);
         UserInfo storage user = userInfo[pid][msg.sender];
         int256 accumulatedSushi = int256(user.amount.mul(pool.accSushiPerShare) / ACC_SUSHI_PRECISION);
@@ -256,5 +273,9 @@ contract MasterChef is UUPSUpgradeable,OwnableUpgradeable,AccessControlEnumerabl
         // Note: transfer can fail or succeed if `amount` is zero.
         TransferHelper.safeTransfer(address(lpToken[pid]),to, amount);
         emit EmergencyWithdraw(msg.sender, pid, amount, to);
+    }
+
+    function setPause(bool _pause) public onlyRole(AdminRole) {
+        paused = _pause;
     }
 }

@@ -8,6 +8,7 @@ import "./interfaces/IERC20.sol";
 import './libraries/SafeMath.sol';
 import './libraries/TransferHelper.sol';
 import './MasterChefStorage.sol';
+import "hardhat/console.sol";
 
 /// @notice The (older) MasterChef contract gives out a constant number of SUSHI tokens per block.
 /// It is the only address with minting rights for SUSHI.
@@ -31,15 +32,20 @@ contract MasterChefWithExternalStorage is OwnableUpgradeable,AccessControlEnumer
     event LogInit();
 
     MasterChefStorage private _storage;
-    constructor(address storageContract) {
-        _storage = MasterChefStorage(storageContract);
+    constructor() {
+        _disableInitializers();
     }
 
     /// @notice Deposits a dummy token to `MASTER_CHEF` MCV1. This is required because MCV1 holds the minting rights for SUSHI.
     /// Any balance of transaction sender in `dummyToken` is transferred.
     /// The allocation point for the pool on MCV1 is the total allocation point for all pools that receive double incentives.
-    function initilize(address _sushi,address _updateroler) initializer external {
-        _storage.setSushi(_sushi);
+    function initilize(address _storageContract) initializer external {
+        __Ownable_init(msg.sender);
+        _storage = MasterChefStorage(_storageContract);
+    }
+
+    function setRewardToken(address _rewardToken) public onlyOwner {
+        _storage.setSushi(_rewardToken);
     }
 
     /// @notice Add a new LP to the pool. Can only be called by the owner.
@@ -51,7 +57,7 @@ contract MasterChefWithExternalStorage is OwnableUpgradeable,AccessControlEnumer
         uint256 totalAllocPointBefore = _storage.getTotalAllocPoint();
         _storage.setTotalAllocPoint(totalAllocPointBefore + allocPoint);
         _storage.pushLpToken(address(_lpToken));
-        _storage.pushPoolInfo(uint64(allocPoint), uint64(lastRewardBlock), 0);
+        _storage.pushPoolInfo(0, uint64(lastRewardBlock),uint64(allocPoint));
         emit LogPoolAddition(_storage.getLpTokenLength(), allocPoint, _lpToken);
     }
 
@@ -71,14 +77,23 @@ contract MasterChefWithExternalStorage is OwnableUpgradeable,AccessControlEnumer
     /// @return pending SUSHI reward for a given user.
     function pendingSushi(uint256 _pid, address _user) external view returns (uint256 pending) {
         MasterChefStorage.PoolInfo memory pool = _storage.getPoolInfoElement(_pid);
+        console.log("pool.accSushiPerShare", pool.accSushiPerShare);
+        console.log("pool.lastRewardBlock", pool.lastRewardBlock);
         MasterChefStorage.UserInfo memory user = _storage.getUserInfoElement(_pid, _user);
+        console.log("user.amount", user.amount);
+        console.log("user.rewardDebt", uint256(user.rewardDebt));
+
         uint256 accSushiPerShare = pool.accSushiPerShare;
         uint256 lpSupply = IERC20(_storage.getLpTokenElement(_pid)).balanceOf(address(this));
+        console.log("lpSupply", lpSupply);
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 blocks = block.number.sub(pool.lastRewardBlock);
             uint256 sushiReward = blocks.mul(_storage.SUSHI_PER_BLOCK()).mul(pool.allocPoint) / _storage.getTotalAllocPoint();
             accSushiPerShare = accSushiPerShare.add(sushiReward.mul(_storage.ACC_SUSHI_PRECISION()) / lpSupply);
         }
+        console.log("accSushiPerShare", accSushiPerShare);
+        console.log("user.amount", user.amount);
+        console.log("user.rewardDebt", uint256(user.rewardDebt));
         pending = int256(user.amount.mul(accSushiPerShare) / _storage.ACC_SUSHI_PRECISION()).sub(user.rewardDebt).toUInt256();
     }
 

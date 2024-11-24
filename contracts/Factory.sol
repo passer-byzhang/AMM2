@@ -37,12 +37,12 @@ contract Factory is IFactory {
     }
 
     function setFeeTo(address _feeTo) external {
-        require(msg.sender == feeToSetter, 'UniswapV2: FORBIDDEN');
+        require(msg.sender == feeToSetter, 'AMMV2: FORBIDDEN');
         feeTo = _feeTo;
     }
 
     function setFeeToSetter(address _feeToSetter) external {
-        require(msg.sender == feeToSetter, 'UniswapV2: FORBIDDEN');
+        require(msg.sender == feeToSetter, 'AMMV2: FORBIDDEN');
         feeToSetter = _feeToSetter;
     }
 }
